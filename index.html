@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101524">
+  <link rel="icon" href="./assets/sprites/UI_界面/ui/Common/img_gezi_bag.png">
+  <title>勇者塞满包 · 背包合成乱斗</title>
+  <link rel="stylesheet" href="./styles.css?v=4">
+</head>
+<body>
+  <main class="app-shell" id="app-shell">
+    <!-- 跨屏飞弹、位图跳字与合成庆典浮层 -->
+    <div class="global-fx-layer" id="global-fx-layer" aria-hidden="true"></div>
+    <div class="drag-ghost" id="drag-ghost" hidden aria-hidden="true"></div>
+    <div class="toast-banner" id="toast-banner" role="status" aria-live="polite"></div>
+    <div class="mythic-toast" id="mythic-toast" hidden aria-live="polite"></div>
+
+    <!-- 1. 顶部全局状态栏 -->
+    <header class="top-bar" id="top-bar">
+      <div class="hud-left">
+        <button type="button" class="hero-badge" id="hero-badge" aria-label="查看当前勇者被动技能">
+          <img id="hero-badge-img" src="./assets/textures/角色/role/skin_8.png" width="24" height="24" alt="">
+          <span id="hero-badge-name">狂战</span>
+        </button>
+
+        <div class="hud-pill hearts-pill" id="hearts-display" title="剩余不屈红心">❤️❤️❤️❤️❤️</div>
+
+        <div class="hud-pill gold-pill" title="当前持有金币">
+          <img src="./assets/sprites/UI_界面/ui/Common/jinbi.png" width="15" height="15" alt="" aria-hidden="true">
+          <span id="gold-display">14</span>
+        </div>
+
+        <div class="hud-pill round-pill" id="round-display">第 1/10 轮</div>
+      </div>
+
+      <div class="hud-right">
+        <button type="button" class="hud-icon-btn" id="btn-catalog" aria-label="打开装备图鉴与神话合成表" title="图鉴与合成配方">📖</button>
+        <button type="button" class="hud-icon-btn" id="btn-help" aria-label="打开玩法规则说明" title="玩法规则">❓</button>
+        <button type="button" class="hud-icon-btn" id="btn-mute" aria-label="切换声音静音" title="音效开关">🔊</button>
+      </div>
+    </header>
+
+    <!-- 2. 上半屏：1v1 狂飙飞弹竞技场 -->
+    <section class="arena-stage" id="arena-stage" aria-label="1v1 实时背包狂飙对轰竞技场">
+      <div class="arena-bg" id="arena-bg"></div>
+      <div class="fx-layer" id="fx-layer" aria-hidden="true"></div>
+
+      <!-- 竞技场顶栏：战力速览 / 狂暴计时 / 敌方波次头衔 -->
+      <div class="arena-top-strip">
+        <div class="power-summary-chip" id="power-summary-chip">⚔️ 秒伤 0.0 · 🛡️ 盾 0</div>
+        <div class="frenzy-badge" id="frenzy-badge" hidden>🔥 疲劳狂暴 ×1.0</div>
+        <div class="enemy-wave-chip" id="enemy-wave-chip">第1轮 · 荒原先锋</div>
+      </div>
+
+      <!-- 双边角色立绘对轰舞台 -->
+      <div class="duel-field">
+        <!-- 我方勇者卡片 -->
+        <article class="fighter-card player-card" id="player-fighter">
+          <div class="portrait-stage" id="player-stage-anchor">
+            <img class="pedestal-img" src="./assets/sprites/UI_界面/ui/Game/img_dizuo_sy.png" width="116" height="131" alt="" aria-hidden="true">
+            <img class="fighter-portrait" id="player-portrait" src="./assets/textures/角色/role/skin_8.png" width="128" height="100" fetchpriority="high" alt="我方勇者">
+          </div>
+          <div class="fighter-meta">
+            <div class="fighter-name-row">
+              <strong class="fighter-name" id="player-name">圣盾狂战</strong>
+              <span class="shield-badge" id="player-shield-badge" hidden>🛡️0</span>
+            </div>
+            <div class="hp-bar-track">
+              <div class="hp-bar-fill player-hp-fill" id="player-hp-fill"></div>
+              <div class="shield-bar-fill" id="player-shield-fill"></div>
+              <span class="hp-bar-text" id="player-hp-text">180 / 180</span>
+            </div>
+            <div class="status-chips-row" id="player-status-row"></div>
+          </div>
+        </article>
+
+        <!-- 中央对决徽章 -->
+        <div class="vs-center-col">
+          <img class="vs-emblem" id="vs-emblem" src="./assets/sprites/UI_界面/ui/TavernFight/img_duijue_jgzq.png" width="38" height="38" alt="" aria-hidden="true">
+          <span class="battle-clock" id="battle-clock">整备中</span>
+        </div>
+
+        <!-- 敌方 Boss 卡片 -->
+        <article class="fighter-card enemy-card" id="enemy-fighter">
+          <div class="portrait-stage" id="enemy-stage-anchor">
+            <img class="pedestal-img" src="./assets/sprites/UI_界面/ui/Game/img_dizuo_sy.png" width="116" height="131" alt="" aria-hidden="true">
+            <img class="fighter-portrait enemy-portrait-img" id="enemy-portrait" src="./assets/textures/角色/role/moster_1_14.png" width="128" height="100" fetchpriority="high" alt="敌方首领">
+          </div>
+          <div class="fighter-meta">
+            <div class="fighter-name-row">
+              <strong class="fighter-name enemy-name-text" id="enemy-name">裂牙野猪王</strong>
+              <span class="shield-badge" id="enemy-shield-badge" hidden>🛡️0</span>
+            </div>
+            <div class="hp-bar-track enemy-hp-track">
+              <div class="hp-bar-fill enemy-hp-fill" id="enemy-hp-fill"></div>
+              <div class="shield-bar-fill" id="enemy-shield-fill"></div>
+              <span class="hp-bar-text" id="enemy-hp-text">135 / 135</span>
+            </div>
+            <div class="status-chips-row" id="enemy-status-row"></div>
+          </div>
+        </article>
+      </div>
+
+      <!-- 敌方可见装备预览栏（战中实时显示敌方 CD 充能与触发脉冲） -->
+      <div class="enemy-loadout-wrap">
+        <span class="loadout-label">敌装</span>
+        <div class="enemy-loadout-bar" id="enemy-loadout-bar" role="list" aria-label="敌方携带装备预览"></div>
+      </div>
+    </section>
+
+    <!-- 3. 中腰战术检视条与 4 格暂存托盘 -->
+    <section class="inspector-tray-bar" id="inspector-tray-bar" aria-label="物品战术检视与暂存托盘">
+      <div class="item-inspector" id="item-inspector">
+        <div class="inspector-info" id="inspector-info">
+          <span class="inspector-hint">💡 拖拽或点选装备放入背包；同款叠合升阶，相邻配对合★神话！</span>
+        </div>
+        <div class="inspector-btns" id="inspector-btns">
+          <button type="button" class="tactic-btn rotate-btn" id="btn-rotate" disabled title="顺时针旋转 90° (快捷键 R)">🔄 旋转</button>
+          <button type="button" class="tactic-btn sell-btn" id="btn-sell" disabled title="出售当前选中物品换取金币">💰 出售</button>
+          <button type="button" class="tactic-btn sort-btn" id="btn-auto-sort" title="自动扩格、合成并按最优光环整理背包">✨ 整理</button>
+        </div>
+      </div>
+
+      <div class="holding-tray-wrap">
+        <div class="tray-header">
+          <span>暂存区</span>
+          <small id="tray-count-text">0/4</small>
+        </div>
+        <div class="holding-tray" id="holding-tray" role="list" aria-label="4格暂存托盘">
+          <div class="tray-slot" data-tray-index="0" role="listitem" tabindex="0" aria-label="暂存槽 1"></div>
+          <div class="tray-slot" data-tray-index="1" role="listitem" tabindex="0" aria-label="暂存槽 2"></div>
+          <div class="tray-slot" data-tray-index="2" role="listitem" tabindex="0" aria-label="暂存槽 3"></div>
+          <div class="tray-slot" data-tray-index="3" role="listitem" tabindex="0" aria-label="暂存槽 4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 下半屏：7×5 异形网格大背包 + 折叠/展开商店 + 底部控制栏 -->
+    <section class="workshop-zone" id="workshop-zone" aria-label="异形背包工坊与军需商店">
+      <!-- 背包头栏与扩建提示条 -->
+      <div class="bag-header-bar">
+        <div class="bag-title-group">
+          <span class="bag-title-pill">🎒 空间背包 <strong id="bag-cells-count">15/35</strong></span>
+          <span class="synergy-count-pill" id="synergy-count-pill">✨ 光环 ×0</span>
+        </div>
+
+        <div class="expand-banner" id="expand-banner" hidden>
+          <span id="expand-points-text">🔓 可扩格 +3</span>
+          <button type="button" class="auto-expand-btn" id="btn-auto-expand">一键扩格</button>
+        </div>
+      </div>
+
+      <!-- 7×5 背包棋盘主区 -->
+      <div class="backpack-board-wrap" id="backpack-board-wrap">
+        <div class="backpack-board" id="backpack-board">
+          <!-- 底层 7×5 格子底砖与预览高亮 -->
+          <div class="backpack-grid" id="backpack-grid" role="grid" aria-label="7列5行异形背包网格"></div>
+          <!-- 中层 光环连线与神话配对 SVG -->
+          <svg class="synergy-svg" id="synergy-svg" viewBox="0 0 700 500" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <!-- 顶层 异形多格物品实例与实时 CD 遮罩 -->
+          <div class="backpack-items-layer" id="backpack-items-layer"></div>
+        </div>
+      </div>
+
+      <!-- 军需商店面板（紧凑单行头栏 + 精炼商品卡，释放背包空间） -->
+      <div class="shop-panel" id="shop-panel" aria-label="本轮商店货架">
+        <div class="shop-header-row">
+          <span class="shop-title-tag">🛒 军需补给架 <small id="shop-hint-sub">拖入背包或连点购买</small></span>
+          <span class="streak-chip" id="streak-chip" hidden>🔥 连胜 +0</span>
+        </div>
+        <div class="shop-cards-row" id="shop-cards-row" role="list" aria-label="商店5槽待售装备"></div>
+      </div>
+
+      <!-- 底部主控制栏 -->
+      <div class="bottom-controls" id="bottom-controls">
+        <!-- 整备阶段控制按钮 -->
+        <div class="controls-row prep-controls" id="prep-controls">
+          <button type="button" class="ctrl-btn shop-toggle-btn" id="btn-toggle-shop" aria-expanded="true">
+            <span class="ctrl-main" id="toggle-shop-label">🛒 收起店</span>
+            <span class="ctrl-sub" id="toggle-shop-sub">放大背包</span>
+          </button>
+
+          <button type="button" class="ctrl-btn reroll-btn" id="btn-reroll">
+            <span class="ctrl-main">🔄 刷新</span>
+            <span class="ctrl-sub" id="reroll-cost-label">消耗 2 金</span>
+          </button>
+
+          <button type="button" class="ctrl-btn lock-btn" id="btn-lock-shop" aria-pressed="false">
+            <span class="ctrl-main" id="lock-shop-label">❄️ 锁店</span>
+            <span class="ctrl-sub" id="lock-shop-sub">保留未买货</span>
+          </button>
+
+          <button type="button" class="ctrl-btn fight-btn" id="btn-start-combat">
+            <span class="ctrl-main">⚔️ 塞满开战</span>
+            <span class="ctrl-sub" id="start-combat-sub">迎战第 1 轮</span>
+          </button>
+        </div>
+
+        <!-- 战斗阶段控制按钮 -->
+        <div class="controls-row combat-controls" id="combat-controls" hidden>
+          <button type="button" class="ctrl-btn speed-btn" id="btn-speed">
+            <span class="ctrl-main" id="speed-btn-label">⏩ 倍速 ×1</span>
+            <span class="ctrl-sub">切换 ×1 / ×2 / ×3</span>
+          </button>
+
+          <button type="button" class="ctrl-btn skip-btn" id="btn-skip-combat">
+            <span class="ctrl-main">⚡ 瞬时结算</span>
+            <span class="ctrl-sub">立即快进至本轮胜负</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 弹窗 1：开局选择出战勇者 -->
+  <dialog id="hero-dialog" class="game-dialog" closedby="none" aria-labelledby="hero-dialog-title">
+    <div class="dialog-panel">
+      <div class="hero-banner-head">
+        <img class="brand-logo" src="./assets/sprites/UI_界面/ui/Loading/logo.png" width="136" height="54" alt="闯关勇者">
+        <h1 id="hero-dialog-title" class="dialog-title">🎒 勇者塞满包 · 背包合成乱斗</h1>
+        <p class="dialog-subtitle">旋转异形装备塞满背包，<strong>同款二合一升阶 + 相邻觉醒★神话神装</strong>，体验满屏飞弹狂飙对轰！请选择出战勇者：</p>
+      </div>
+      <div class="hero-pick-grid" id="hero-pick-grid"></div>
+    </div>
+  </dialog>
+
+  <!-- 弹窗 2：装备图鉴与★神话合成配方秘典 -->
+  <dialog id="catalog-dialog" class="game-dialog" closedby="any" aria-labelledby="catalog-dialog-title">
+    <div class="dialog-panel dialog-panel-wide">
+      <div class="dialog-head-row">
+        <h1 id="catalog-dialog-title" class="dialog-title">📖 背包神装与合成秘典</h1>
+        <form method="dialog">
+          <button type="submit" class="dialog-close-btn" aria-label="关闭图鉴" autofocus>✕</button>
+        </form>
+      </div>
+      <div class="catalog-tabs" id="catalog-tabs">
+        <button type="button" class="tab-chip is-active" data-tab="mythic">🌟 ★神话配方</button>
+        <button type="button" class="tab-chip" data-tab="weapons">⚔️ 进化武器</button>
+        <button type="button" class="tab-chip" data-tab="auras">✨ 防具与光环</button>
+      </div>
+      <div class="catalog-body" id="catalog-body"></div>
+    </div>
+  </dialog>
+
+  <!-- 弹窗 3：玩法规则速成指南 -->
+  <dialog id="help-dialog" class="game-dialog" closedby="any" aria-labelledby="help-dialog-title">
+    <div class="dialog-panel">
+      <div class="dialog-head-row">
+        <h1 id="help-dialog-title" class="dialog-title">❓ 勇者塞满包 · 速成指南</h1>
+        <form method="dialog">
+          <button type="submit" class="dialog-close-btn" aria-label="关闭规则说明" autofocus>✕</button>
+        </form>
+      </div>
+      <ul class="help-list">
+        <li><strong>🎒 异形摆包与扩建</strong>：中心 15 格起步，每轮战后获得 <code>+2~3</code> 点扩建额度，点击背包边缘闪烁虚线格即可拓宽版图！支持<strong>按住拖拽</strong>或<strong>点选放置</strong>，按 <code>R</code> 键或【🔄 旋转】顺时针旋转 90°。</li>
+        <li><strong>⬆️ 同名二合一进化</strong>：剑、斧、弓、火铳、重锤、法杖支持 <code>Lv1 → Lv2 → Lv3 → Lv4</code> 两两叠合原地升阶，省出宝贵空间且威力翻倍！</li>
+        <li><strong>🌟 跨物品★神话融合</strong>：将特定配对物品（如<code>魔法烤鸡腿 + 法杖 = ★鸡腿法杖</code>）直接拖到一起，或<strong>十字紧贴相邻摆放后点击开战</strong>，即可觉醒红品★神话神装！</li>
+        <li><strong>✨ 十字/星位邻接光环</strong>：齿轮、宝石、毒瓶、磨刀石、圣印会向十字（4向）或星位（8向）相邻装备投射<strong>充能加速、附毒、暴击、增伤、叠盾</strong>连线！</li>
+        <li><strong>💥 1v1 独立 CD 狂飙对轰</strong>：开战后背包内每件装备按各自独立冷却条循环发射原版飞弹，15 秒后进入疲劳狂暴，闯过<strong>第 10 轮魔王</strong>即登顶凯旋！</li>
+      </ul>
+      <form method="dialog" class="dialog-foot">
+        <button type="submit" class="primary-modal-btn">明白，开始塞包！</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 弹窗 4：终局通关 / 惜败结算面板 -->
+  <dialog id="result-dialog" class="game-dialog" closedby="none" aria-labelledby="result-dialog-title">
+    <div class="dialog-panel result-panel">
+      <h1 id="result-dialog-title" class="dialog-title">🏆 十轮制霸 · 塞包之神！</h1>
+      <p class="dialog-subtitle" id="result-dialog-sub"></p>
+      <div class="result-stats-grid" id="result-stats-grid"></div>
+      <div class="result-bag-showcase" id="result-bag-showcase"></div>
+      <div class="result-actions">
+        <button type="button" class="primary-modal-btn" id="btn-restart" autofocus>🎒 重新选将再来一局</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="./src/main.js?v=4"></script>
+</body>
+</html>
